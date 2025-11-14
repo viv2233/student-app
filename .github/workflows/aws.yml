@@ -7,50 +7,22 @@ on:
   workflow_dispatch:
 
 jobs:
+      deploy:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout code
+            uses: actions/checkout@v4
 
-  check-code-lint:
-    runs-on: ubuntu-latests
-    steps:
-    - name: Deploy to AWS-EC2
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        # NOTE: Using standardized secrets defined in the repository
-        host: ${{ secrets.AWS_HOST }}
-        username: ${{ secrets.AWS_USERNAME }}
-        key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
-        script: |
-          # Define deployment path
-          # This assumes the target application directory is 'student-app'
-          DEPLOY_PATH="/home/${{ secrets.AWS_USERNAME }}/student-app"
-          REPO_URL="https://github.com/viv2233/student-app.git"
-          
-          # 1. Create parent directory if needed
-          mkdir -p $DEPLOY_PATH
-          cd $DEPLOY_PATH || exit 1 # Exit if directory change fails
-
-          # --- Environment setup (Optional, uncomment if needed) ---
-          # sudo apt update && sudo apt install -y docker-compose-plugin git # For Ubuntu
-          
-          # 2. Clone or update the deployment repository
-          if [ -d ".git" ]; then
-            echo "Pulling latest code changes into $DEPLOY_PATH..."
-            # Pulls the latest code from the main branch
-            git pull origin main
-          else
-            echo "Cloning repository $REPO_URL into $DEPLOY_PATH..."
-            # Clone into the current directory (which is $DEPLOY_PATH)
-            git clone $REPO_URL .
-          fi
-
-          # 3. Stop and remove the old service, then start the new one with local build
-          echo "Building image(s) and starting service using Docker Compose..."
-          # The --build flag forces a fresh build. --force-recreate ensures the new image is used.
-          cd $DEPLOY_PATH || exit 1
-          docker compose up -d --build --force-recreate
-
-          # 4. Clean up old, unused images
-          echo "Cleaning up dangling images to save disk space..."
-          docker image prune -f
-
-          echo "Deployment successful!"
-
+          - name: Deploy to Server via SSH
+            uses: appleboy/ssh-action@v1.0.0
+            with:
+              host: ${{ secrets.SSH_HOST }}
+              username: ${{ secrets.SSH_USERNAME }}
+              key: ${{ secrets.SSH_PRIVATE_KEY }}
+              script: |
+                # Your commands to execute on the Linux server
+                git clone https://github.com/viv2233/student-app.git
+                cd student-app
+                git pull origin main
+                # Example: restart a service
+                sudo systemctl restart your-service
