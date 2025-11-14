@@ -32,5 +32,4 @@ jobs:
             sudo -i
             git clone https://github.com/viv2233/student-app.git
             cd student-app
-            docker-compose down
             docker-compose up -d --build
